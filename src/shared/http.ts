@@ -18,3 +18,17 @@ export class Http extends Schema.TaggedClass<Http>()('Http', {
     Schema.withConstructorDefault(Effect.sync(() => new Date()))
   ),
 }) {}
+
+export class NotFound extends Http.extend<NotFound>('NotFound')(
+  {
+    status: Schema.Number.pipe(
+      Schema.withConstructorDefault(Effect.succeed(404))
+    ),
+    message: Schema.String.pipe(
+      Schema.withConstructorDefault(
+        Effect.succeed('The requested resource was not found.')
+      )
+    ),
+  },
+  { httpApiStatus: 404 }
+) {}
