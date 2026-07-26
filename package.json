@@ -3,14 +3,19 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bun run --hot src/server.ts",
-    "start": "bun run src/client.ts"
+    "dev:server": "bun run --hot src/server.ts",
+    "dev:web": "bun run --hot web/server.ts"
   },
   "dependencies": {
-    "effect": "^4.0.0-beta.101"
+    "@tanstack/react-query": "^5.101.4",
+    "effect": "^4.0.0-beta.101",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
   },
   "devDependencies": {
     "@types/bun": "latest",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
     "typescript": "^7.0.2"
   }
 }

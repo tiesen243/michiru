@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     // Environment setup & latest features
-    "lib": ["es2024"],
+    "lib": ["es2024", "dom", "dom.iterable"],
     "target": "es2024",
     "module": "preserve",
     "moduleDetection": "force",
@@ -28,9 +28,10 @@
     "noPropertyAccessFromIndexSignature": false,
 
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@web/*": ["./web/src/*"]
     }
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "web/**/*.tsx", "web/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }
