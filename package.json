@@ -1,0 +1,16 @@
+{
+  "name": "michiru",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun run --hot src/server.ts",
+    "start": "bun run src/client.ts"
+  },
+  "dependencies": {
+    "effect": "^4.0.0-beta.101"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^7.0.2"
+  }
+}
