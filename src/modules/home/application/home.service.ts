@@ -8,12 +8,17 @@ export class HomeService extends Context.Service<
   HomeService,
   {
     readonly index: () => Effect.Effect<HomeDto>
+    readonly create: () => Effect.Effect<HomeDto>
   }
 >()('HomeService') {
   public static live = Layer.succeed(
     this,
     this.of({
       index: Effect.fn(function* () {
+        return HomeDto.make()
+      }),
+
+      create: Effect.fn(function* () {
         return HomeDto.make()
       }),
     })

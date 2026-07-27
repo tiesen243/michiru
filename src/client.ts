@@ -9,10 +9,11 @@ import * as HttpApiClient from 'effect/unstable/httpapi/HttpApiClient'
 
 import { Api } from '@/server'
 
-export class ApiClient extends Context.Service<
-  ApiClient,
-  HttpApiClient.ForApi<typeof Api>
->()('ApiClient') {
+export type InferApiClient = HttpApiClient.ForApi<typeof Api>
+
+export class ApiClient extends Context.Service<ApiClient, InferApiClient>()(
+  'ApiClient'
+) {
   static readonly layer = Layer.effect(
     ApiClient,
     HttpApiClient.make(Api, {

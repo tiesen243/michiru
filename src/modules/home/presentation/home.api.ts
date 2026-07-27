@@ -12,7 +12,9 @@ export class HomeApi extends HttpApi.make('Api').add(HomeController) {
     Effect.fn(function* (handlers) {
       const homeService = yield* Effect.service(HomeService)
 
-      return handlers.handle('index', homeService.index)
+      return handlers
+        .handle('index', homeService.index)
+        .handle('create', homeService.create)
     })
   )
 }
