@@ -8,7 +8,12 @@ export class HomeService extends Context.Service<
   HomeService,
   {
     readonly index: () => Effect.Effect<HomeDto>
-    readonly create: () => Effect.Effect<HomeDto>
+    readonly hello: (input: {
+      params: { name: string }
+    }) => Effect.Effect<HomeDto>
+    readonly create: (input: {
+      payload: { title: string }
+    }) => Effect.Effect<HomeDto>
   }
 >()('HomeService') {
   public static live = Layer.succeed(
@@ -18,8 +23,12 @@ export class HomeService extends Context.Service<
         return HomeDto.make()
       }),
 
-      create: Effect.fn(function* () {
-        return HomeDto.make()
+      hello: Effect.fn(function* ({ params }) {
+        return HomeDto.make({ message: `Hello, ${params.name}!` })
+      }),
+
+      create: Effect.fn(function* ({ payload }) {
+        return HomeDto.make({ data: payload })
       }),
     })
   )

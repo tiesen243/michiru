@@ -1,7 +1,7 @@
 import * as Effect from 'effect/Effect'
 import * as Schema from 'effect/Schema'
 
-export class Http extends Schema.TaggedClass<Http>()('Http', {
+export class Http extends Schema.Class<Http>('Http')({
   status: Schema.Number.pipe(
     Schema.withConstructorDefault(Effect.succeed(200))
   ),

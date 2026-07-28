@@ -10,12 +10,21 @@ export class HomeController extends HttpApiGroup.make('home')
     HttpApiEndpoint.get('index', '/', {
       success: HomeDto,
       error: Http,
+    })
+  )
 
-      query: Schema.Struct({
-        search: Schema.String,
+  .add(
+    HttpApiEndpoint.get('hello', '/:name', {
+      success: HomeDto,
+      headers: Schema.Struct({
+        'x-custom-header': Schema.String,
+      }),
+      params: Schema.Struct({
+        name: Schema.String,
       }),
     })
   )
+
   .add(
     HttpApiEndpoint.post('create', '/create', {
       success: HomeDto,

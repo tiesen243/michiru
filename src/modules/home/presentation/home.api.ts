@@ -14,6 +14,7 @@ export class HomeApi extends HttpApi.make('Api').add(HomeController) {
 
       return handlers
         .handle('index', homeService.index)
+        .handle('hello', homeService.hello)
         .handle('create', homeService.create)
     })
   )

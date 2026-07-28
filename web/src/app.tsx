@@ -3,26 +3,42 @@ import { createTanstackQueryProxy } from '@web/lib/api'
 import * as ManagedRuntime from 'effect/ManagedRuntime'
 
 import { ApiClient } from '@/client'
-import { Api } from '@/server'
 
 const runtime = ManagedRuntime.make(ApiClient.layer)
-const api = createTanstackQueryProxy<typeof Api>()(runtime, ApiClient)
+const api = createTanstackQueryProxy(runtime, ApiClient)
 
 export function App() {
-  const { data } = useQuery(api.home.index.queryOptions({ search: 'dsada' }))
+  const searchParams = new URLSearchParams(window.location.search)
 
-  const mutation = useMutation(
-    api.home.create.mutationOptions({
-      onSuccess: console.log,
-    })
-  )
+  const { data, isLoading } = useQuery({
+    ...api.home.index.queryOptions(),
+  })
 
-  console.log(api.home.create.mutationOptions())
+  const { data: hello, isLoading: isHelloLoading } = useQuery({
+    ...api.home.hello.queryOptions({
+      params: { name: searchParams.get('name') ?? 'World' },
+      headers: { 'x-custom-header': 'cac' },
+    }),
+    select: (data) => data.message,
+  })
+
+  const keys = api.home.index.getQueryKey()
+
+  const mutation = useMutation({
+    ...api.home.create.mutationOptions(),
+    onSuccess: (data) => console.log(data),
+  })
 
   return (
     <main>
       <h1>Hello, World!</h1>
-      <pre>{JSON.stringify(data, null, 2)}</pre>
+      <pre>{isLoading ? 'loading...' : JSON.stringify(data, null, 2)}</pre>
+
+      <pre>
+        {isHelloLoading ? 'loading...' : JSON.stringify(hello, null, 2)}
+      </pre>
+
+      <pre>{JSON.stringify(keys, null, 2)}</pre>
 
       <button onClick={() => mutation.mutate({ title: 'New Item' })}>
         Click me to create
