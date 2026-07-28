@@ -2,13 +2,8 @@ import '@web/main.css'
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { App } from '@web/app'
-import { ManagedRuntime } from 'effect'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-
-import { ApiClient } from '@/client'
-
-export const runtime = ManagedRuntime.make(ApiClient.layer)
 
 const queryClient = new QueryClient({
   defaultOptions: {

@@ -1,11 +1,8 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { createTanstackQueryProxy } from '@web/lib/api'
-import * as ManagedRuntime from 'effect/ManagedRuntime'
+import { createTanstackQueryOptionsProxy } from '@tiesen/effect-tanstack-query'
+import { ApiClient, runtime } from '@web/lib/api'
 
-import { ApiClient } from '@/client'
-
-const runtime = ManagedRuntime.make(ApiClient.layer)
-const api = createTanstackQueryProxy(runtime, ApiClient)
+const api = createTanstackQueryOptionsProxy(ApiClient, runtime)
 
 export function App() {
   const searchParams = new URLSearchParams(window.location.search)
@@ -17,9 +14,7 @@ export function App() {
   const { data: hello, isLoading: isHelloLoading } = useQuery({
     ...api.home.hello.queryOptions({
       params: { name: searchParams.get('name') ?? 'World' },
-      headers: { 'x-custom-header': 'cac' },
     }),
-    select: (data) => data.message,
   })
 
   const keys = api.home.index.getQueryKey()

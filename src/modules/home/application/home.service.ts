@@ -20,7 +20,7 @@ export class HomeService extends Context.Service<
     this,
     this.of({
       index: Effect.fn(function* () {
-        return HomeDto.make()
+        return HomeDto.make({ message: 'Welcome to the Home Service!' })
       }),
 
       hello: Effect.fn(function* ({ params }) {
