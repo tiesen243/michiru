@@ -1,8 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { createTanstackQueryOptionsProxy } from '@tiesen/effect-tanstack-query'
-import { ApiClient, runtime } from '@web/lib/api'
-
-const api = createTanstackQueryOptionsProxy(ApiClient, runtime)
+import { useSubscription } from '@web/hooks/use-subcription'
+import { api } from '@web/lib/api'
 
 export function App() {
   const searchParams = new URLSearchParams(window.location.search)
@@ -24,6 +22,18 @@ export function App() {
     onSuccess: (data) => console.log(data),
   })
 
+  useSubscription({
+    url: 'http://localhost:3000/events',
+    queryKey: ['events'],
+
+    onMessage: console.log,
+  })
+
+  const { data: messages = [] } = useQuery({
+    queryKey: ['events'],
+    queryFn: () => [],
+  })
+
   return (
     <main>
       <h1>Hello, World!</h1>
@@ -34,6 +44,8 @@ export function App() {
       </pre>
 
       <pre>{JSON.stringify(keys, null, 2)}</pre>
+
+      <pre>{JSON.stringify(messages, null, 2)}</pre>
 
       <button onClick={() => mutation.mutate({ title: 'New Item' })}>
         Click me to create

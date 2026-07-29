@@ -1,14 +1,16 @@
 import * as Layer from 'effect/Layer'
 
 import { HomeService } from '@/modules/home/application/home.service'
-import { HomeApi } from '@/modules/home/presentation/home.api'
+import { StreamService } from '@/modules/home/application/stream.service'
+import { HomeLive } from '@/modules/home/presentation/home.live'
+import { StreamLive } from '@/modules/home/presentation/stream.live'
 
 export const HomeModule = () => {
-  const layer = Layer.mergeAll(HomeService.live)
+  const layer = Layer.mergeAll(HomeService.live, StreamService.live)
+
+  const live = Layer.mergeAll(HomeLive, StreamLive)
 
   return {
-    api: HomeApi,
-
-    live: HomeApi.live.pipe(Layer.provide(layer)),
+    live: Layer.provide(live, layer),
   }
 }
