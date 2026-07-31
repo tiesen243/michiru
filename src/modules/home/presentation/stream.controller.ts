@@ -3,6 +3,12 @@ import * as HttpApiEndpoint from 'effect/unstable/httpapi/HttpApiEndpoint'
 import * as HttpApiGroup from 'effect/unstable/httpapi/HttpApiGroup'
 import * as HttpApiSchema from 'effect/unstable/httpapi/HttpApiSchema'
 
+export class SSEError extends Schema.TaggedErrorClass<SSEError>()(
+  'SSEError',
+  {},
+  { httpApiStatus: 500 }
+) {}
+
 export class StreamController extends HttpApiGroup.make('stream')
   .add(
     HttpApiEndpoint.get('events', '/events/:id', {
@@ -11,6 +17,7 @@ export class StreamController extends HttpApiGroup.make('stream')
       }),
       success: HttpApiSchema.StreamSse({
         data: Schema.String,
+        error: SSEError,
       }),
     })
   )
@@ -23,5 +30,6 @@ export class StreamController extends HttpApiGroup.make('stream')
       success: Schema.Struct({
         success: Schema.Boolean,
       }),
+      error: SSEError,
     })
   ) {}
