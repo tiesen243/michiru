@@ -9,6 +9,8 @@ import * as HttpApiClient from 'effect/unstable/httpapi/HttpApiClient'
 
 import { Api } from '@/server'
 
+type A = HttpApiClient.ForApi<typeof Api>['stream']['events']
+
 export class ApiClient extends Context.Service<
   ApiClient,
   HttpApiClient.ForApi<typeof Api>

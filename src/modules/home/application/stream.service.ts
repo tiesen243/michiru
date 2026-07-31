@@ -11,28 +11,34 @@ import * as SynchronizedRef from 'effect/SynchronizedRef'
 export class StreamService extends Context.Service<
   StreamService,
   {
-    readonly registerConnection: (connectionId: string) => Effect.Effect<void>
-    readonly unregisterConnection: (connectionId: string) => Effect.Effect<void>
+    readonly register: (connectionId: string) => Effect.Effect<void>
+    readonly unregister: (connectionId: string) => Effect.Effect<void>
 
-    readonly publish: (message: string) => Effect.Effect<void>
-    readonly subscribe: Stream.Stream<string>
+    readonly publish: (
+      connectionId: string,
+      message: string
+    ) => Effect.Effect<void>
+    readonly subscribe: (connectionId: string) => Stream.Stream<string>
   }
 >()('StreamService') {
   public static live = Layer.effect(
     this,
     Effect.gen(function* () {
       const connections = yield* SynchronizedRef.make(
-        MutableHashMap.empty<string, ActiveConnection>()
+        MutableHashMap.empty<string, StreamService.ActiveConnection>()
       )
 
-      const registerConnection = Effect.fn(function* (connectionId: string) {
+      const register = Effect.fn(function* (connectionId: string) {
+        const pubsub = yield* PubSub.unbounded<string>()
+
         yield* SynchronizedRef.updateEffect(connections, (map) =>
           Clock.currentTimeMillis.pipe(
             Effect.map((now) => {
-              const activeConnection: ActiveConnection = {
-                id: connectionId,
+              const activeConnection = {
+                connectionId,
                 lastActivityTimestamp: now,
-              }
+                pubsub,
+              } satisfies StreamService.ActiveConnection
 
               return MutableHashMap.set(map, connectionId, activeConnection)
             }),
@@ -43,28 +49,54 @@ export class StreamService extends Context.Service<
         )
       })
 
-      const unregisterConnection = Effect.fn(function* (connectionId: string) {
+      const unregister = Effect.fn(function* (connectionId: string) {
         yield* SynchronizedRef.updateEffect(connections, (map) => {
           const connection = MutableHashMap.get(map, connectionId)
 
           if (Option.isNone(connection)) return Effect.succeed(map)
+
+          const activeConnection = connection.value
           MutableHashMap.remove(map, connectionId)
 
-          return Effect.logDebug(
-            `Unregistered connection: ${connectionId}`
-          ).pipe(Effect.as(map))
+          return PubSub.shutdown(activeConnection.pubsub).pipe(
+            Effect.tap(() =>
+              Effect.logDebug(`Unregistered connection: ${connectionId}`)
+            ),
+            Effect.as(map)
+          )
         })
       })
 
-      const pubsub = yield* PubSub.unbounded<string>()
+      const publish = (connectionId: string, message: string) =>
+        SynchronizedRef.get(connections).pipe(
+          Effect.flatMap((map) => {
+            const connectionOpt = MutableHashMap.get(map, connectionId)
+            if (Option.isNone(connectionOpt))
+              return Effect.logWarning(
+                `Failed to publish. Connection not found: ${connectionId}`
+              ).pipe(Effect.as(false))
 
-      const publish = (message: string) => PubSub.publish(pubsub, message)
+            const activeConn = connectionOpt.value
+            return PubSub.publish(activeConn.pubsub, message)
+          })
+        )
 
-      const subscribe = Stream.fromPubSub(pubsub)
+      const subscribe = (connectionId: string): Stream.Stream<string> =>
+        Stream.unwrap(
+          SynchronizedRef.get(connections).pipe(
+            Effect.map((map) => {
+              const connectionOpt = MutableHashMap.get(map, connectionId)
+              if (Option.isNone(connectionOpt)) {
+                return Stream.empty
+              }
+              return Stream.fromPubSub(connectionOpt.value.pubsub)
+            })
+          )
+        )
 
       return {
-        registerConnection,
-        unregisterConnection,
+        register,
+        unregister,
 
         publish,
         subscribe,
@@ -73,7 +105,10 @@ export class StreamService extends Context.Service<
   )
 }
 
-interface ActiveConnection {
-  id: string
-  lastActivityTimestamp: number
+export namespace StreamService {
+  export interface ActiveConnection {
+    connectionId: string
+    lastActivityTimestamp: number
+    pubsub: PubSub.PubSub<string>
+  }
 }
