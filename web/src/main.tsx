@@ -2,6 +2,8 @@ import '@web/main.css'
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { App } from '@web/app'
+import { ApiProvider } from '@web/lib/api'
+import { RuntimeProvider } from '@web/lib/runtime'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 
@@ -17,7 +19,11 @@ const elem = document.getElementById('root')!
 const app = (
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <App />
+      <RuntimeProvider>
+        <ApiProvider>
+          <App />
+        </ApiProvider>
+      </RuntimeProvider>
     </QueryClientProvider>
   </StrictMode>
 )
