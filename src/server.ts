@@ -1,7 +1,7 @@
 import * as Layer from 'effect/Layer'
-import { HttpServerResponse } from 'effect/unstable/http'
 import * as HttpRouter from 'effect/unstable/http/HttpRouter'
 import * as HttpServer from 'effect/unstable/http/HttpServer'
+import * as HttpServerResponse from 'effect/unstable/http/HttpServerResponse'
 import * as HttpApiBuilder from 'effect/unstable/httpapi/HttpApiBuilder'
 import * as HttpApiScalar from 'effect/unstable/httpapi/HttpApiScalar'
 
@@ -17,10 +17,9 @@ const ApiLive = HttpApiBuilder.layer(Api, {
   Layer.provide([homeModule.live]),
   Layer.provide(
     HttpRouter.cors({
-      allowedOrigins: ['http://localhost:8000'],
+      allowedOrigins: ['*'],
       allowedHeaders: ['content-type', 'authorization', 'b3', 'traceparent'],
       allowedMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD'],
-      credentials: true,
     })
   )
 )

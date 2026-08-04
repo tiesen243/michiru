@@ -4,11 +4,11 @@
   "type": "module",
   "scripts": {
     "dev:server": "bun run --hot src/server.ts",
-    "dev:web": "bun run --hot web/server.ts"
+    "dev:web": "vite"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.101.4",
-    "@tiesen/effect-tanstack-query": "^0.0.10",
+    "@tiesen/effect-tanstack-query": "^0.0.14",
     "effect": "^4.0.0-beta.102",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
@@ -17,6 +17,8 @@
     "@types/bun": "latest",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
-    "typescript": "^7.0.2"
+    "@vitejs/plugin-react": "^6.0.5",
+    "typescript": "^7.0.2",
+    "vite": "^8.2.0"
   }
 }

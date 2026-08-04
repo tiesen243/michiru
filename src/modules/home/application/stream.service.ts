@@ -29,51 +29,84 @@ export class StreamService extends Context.Service<
       )
 
       const register = Effect.fn(function* (connectionId: string) {
-        const pubsub = yield* PubSub.unbounded<string>()
-
         yield* SynchronizedRef.updateEffect(connections, (map) =>
           Clock.currentTimeMillis.pipe(
-            Effect.map((now) => {
-              const activeConnection = {
-                connectionId,
-                lastActivityTimestamp: now,
-                pubsub,
-              } satisfies StreamService.ActiveConnection
+            Effect.flatMap((now) => {
+              const existingOpt = MutableHashMap.get(map, connectionId)
 
-              return MutableHashMap.set(map, connectionId, activeConnection)
-            }),
-            Effect.tap(() =>
-              Effect.logDebug(`Registered connection: ${connectionId}`)
-            )
+              if (Option.isSome(existingOpt)) {
+                const current = existingOpt.value
+                const updated: StreamService.ActiveConnection = {
+                  ...current,
+                  refCount: current.refCount + 1,
+                  lastActivityTimestamp: now,
+                }
+                MutableHashMap.set(map, connectionId, updated)
+                return Effect.logInfo(
+                  `Client joined room: ${connectionId} (refCount: ${updated.refCount})`
+                ).pipe(Effect.as(map))
+              } else {
+                return PubSub.unbounded<string>().pipe(
+                  Effect.map((pubsub) => {
+                    const newConn: StreamService.ActiveConnection = {
+                      connectionId,
+                      refCount: 1,
+                      lastActivityTimestamp: now,
+                      pubsub,
+                    }
+                    MutableHashMap.set(map, connectionId, newConn)
+                    return map
+                  }),
+                  Effect.tap(() =>
+                    Effect.logInfo(
+                      `Created new room: ${connectionId} (refCount: 1)`
+                    )
+                  )
+                )
+              }
+            })
           )
         )
       })
 
       const unregister = Effect.fn(function* (connectionId: string) {
         yield* SynchronizedRef.updateEffect(connections, (map) => {
-          const connection = MutableHashMap.get(map, connectionId)
+          const existingOpt = MutableHashMap.get(map, connectionId)
 
-          if (Option.isNone(connection)) return Effect.succeed(map)
+          if (Option.isNone(existingOpt)) return Effect.succeed(map)
 
-          const activeConnection = connection.value
-          MutableHashMap.remove(map, connectionId)
+          const activeConn = existingOpt.value
+          const newRefCount = activeConn.refCount - 1
 
-          return PubSub.shutdown(activeConnection.pubsub).pipe(
-            Effect.tap(() =>
-              Effect.logDebug(`Unregistered connection: ${connectionId}`)
-            ),
-            Effect.as(map)
-          )
+          if (newRefCount <= 0) {
+            // Không còn client nào trong phòng -> Chỉ cần XÓA PHÒNG khỏi Map
+            // Bỏ `PubSub.shutdown` để tránh làm đứt stream đột ngột gây ra lỗi releaseLock()
+            MutableHashMap.remove(map, connectionId)
+            return Effect.logDebug(
+              `Room empty, removed room from map: ${connectionId}`
+            ).pipe(Effect.as(map))
+          } else {
+            // Vẫn còn client khác -> Chỉ giảm refCount
+            const updated: StreamService.ActiveConnection = {
+              ...activeConn,
+              refCount: newRefCount,
+            }
+            MutableHashMap.set(map, connectionId, updated)
+            return Effect.logDebug(
+              `Client left room: ${connectionId} (refCount: ${newRefCount})`
+            ).pipe(Effect.as(map))
+          }
         })
       })
 
+      // Gửi tin nhắn vào đúng phòng chat theo connectionId
       const publish = (connectionId: string, message: string) =>
         SynchronizedRef.get(connections).pipe(
           Effect.flatMap((map) => {
             const connectionOpt = MutableHashMap.get(map, connectionId)
             if (Option.isNone(connectionOpt))
               return Effect.logWarning(
-                `Failed to publish. Connection not found: ${connectionId}`
+                `Failed to publish. Room not found or empty: ${connectionId}`
               ).pipe(Effect.as(false))
 
             const activeConn = connectionOpt.value
@@ -81,6 +114,7 @@ export class StreamService extends Context.Service<
           })
         )
 
+      // Lắng nghe stream từ đúng phòng chat theo connectionId
       const subscribe = (connectionId: string): Stream.Stream<string> =>
         Stream.unwrap(
           SynchronizedRef.get(connections).pipe(
@@ -108,6 +142,7 @@ export class StreamService extends Context.Service<
 export namespace StreamService {
   export interface ActiveConnection {
     connectionId: string
+    refCount: number
     lastActivityTimestamp: number
     pubsub: PubSub.PubSub<string>
   }
